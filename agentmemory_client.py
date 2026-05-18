@@ -53,6 +53,29 @@ class AgentMemoryClient:
             json={"query": query, "limit": max(limit, 1)},
         )
 
+    async def expand_search_results(
+        self, results: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        expand_ids = []
+        for result in results:
+            obs_id = result.get("obsId")
+            if not isinstance(obs_id, str) or not obs_id:
+                continue
+            session_id = result.get("sessionId")
+            item: dict[str, Any] = {"obsId": obs_id}
+            if isinstance(session_id, str) and session_id:
+                item["sessionId"] = session_id
+            expand_ids.append(item)
+
+        if not expand_ids:
+            return {"mode": "expanded", "results": []}
+
+        return await self._request(
+            "POST",
+            "/agentmemory/smart-search",
+            json={"expandIds": expand_ids},
+        )
+
     async def observe(
         self,
         *,

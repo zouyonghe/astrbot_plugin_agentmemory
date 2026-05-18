@@ -79,8 +79,24 @@ class AgentMemoryPlugin(star.Star):
         return (
             "[Relevant Long-Term Memory from agentmemory]\n"
             "Treat these notes as background context. Current user instructions "
-            "and current conversation state take precedence.\n" + "\n".join(lines)
+            "and current conversation state take precedence. If a memory contains "
+            "a user-stated fact or preference, prefer that fact over prior assistant "
+            "uncertainty.\n"
+            + "\n".join(lines)
         )
+
+    async def _search_memory_with_text(self, query: str, limit: int) -> dict[str, Any]:
+        payload = await self._client().smart_search(query, limit=limit)
+        if payload.get("mode") != "compact":
+            return payload
+
+        results = payload.get("results", [])
+        if not isinstance(results, list) or not results:
+            return payload
+
+        compact_results = [item for item in results if isinstance(item, dict)]
+        expanded = await self._client().expand_search_results(compact_results)
+        return expanded if expanded.get("results") else payload
 
     @filter.on_llm_request()
     async def inject_agentmemory_context(
@@ -99,7 +115,7 @@ class AgentMemoryPlugin(star.Star):
 
         limit = int(recall.get("limit", 5) or 5)
         try:
-            payload = await self._client().smart_search(query, limit=limit)
+            payload = await self._search_memory_with_text(query, limit)
         except (httpx.HTTPError, ValueError) as exc:
             logger.warning(f"agentmemory recall failed: {exc}")
             return
@@ -165,7 +181,7 @@ class AgentMemoryPlugin(star.Star):
 
         limit = int(self._recall_config().get("limit", 5) or 5)
         try:
-            payload = await self._client().smart_search(query, limit=limit)
+            payload = await self._search_memory_with_text(query, limit)
         except (httpx.HTTPError, ValueError) as exc:
             yield event.plain_result(f"agentmemory search failed: {exc}")
             return
