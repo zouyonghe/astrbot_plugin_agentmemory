@@ -105,3 +105,19 @@ class AgentMemoryClient:
             "/agentmemory/remember",
             json={"content": content, "type": memory_type},
         )
+
+    async def forget_memory(self, memory_id: str) -> dict[str, Any]:
+        return await self._request(
+            "POST",
+            "/agentmemory/forget",
+            json={"memoryId": memory_id},
+        )
+
+    async def forget_observations(
+        self, session_id: str, observation_ids: list[str]
+    ) -> dict[str, Any]:
+        return await self._request(
+            "POST",
+            "/agentmemory/forget",
+            json={"sessionId": session_id, "observationIds": observation_ids},
+        )

@@ -2,7 +2,7 @@
 
 An AstrBot plugin for integrating with agentmemory long-term memory.
 
-This plugin connects AstrBot to [agentmemory](https://github.com/rohitg00/agentmemory) through its REST API. It keeps AstrBot's built-in conversation management unchanged and adds an optional long-term memory layer: relevant memories are recalled before LLM requests, and completed conversation turns are captured after LLM responses.
+This plugin connects AstrBot to [agentmemory](https://github.com/rohitg00/agentmemory) through its REST API. It keeps AstrBot's built-in conversation management unchanged and adds sender_id-scoped long-term memory. The plugin no longer injects memories into prompts automatically; it exposes commands and LLM tools so the model or admins can search, save, and delete memories explicitly.
 
 中文文档: [README.md](README.md)
 
@@ -27,9 +27,8 @@ The plugin does not replace AstrBot's conversation system or knowledge base.
 For a normal turn:
 
 1. The user sends a message.
-2. The plugin searches agentmemory for relevant long-term memory.
-3. The plugin appends recalled memories to the LLM system prompt as background context.
-4. After the assistant responds, the plugin writes the user message and assistant response to agentmemory.
+2. When memory is needed, the model can call `agentmemory_search`, `agentmemory_remember`, or `agentmemory_forget`.
+3. After the assistant responds, the plugin can capture the turn into that sender's long-term memory, depending on configuration.
 
 ## Start agentmemory
 
@@ -74,12 +73,11 @@ The plugin can be configured in the AstrBot WebUI.
 | `secret` (访问密钥) | empty | Bearer token for agentmemory |
 | `project` (项目名称) | `astrbot` | Project name stored in agentmemory |
 | `timeout_seconds` (请求超时时间) | `3.0` | HTTP timeout in seconds |
-| `recall.enabled` (启用记忆召回) | `true` | Recall memory before LLM requests |
-| `recall.limit` (召回数量上限) | `5` | Maximum recalled memories per request |
+| `admin_only` (仅管理员可使用记忆) | `false` | Restrict capture, commands, and LLM tools to admins |
+| `recall.limit` (召回数量上限) | `5` | Maximum memories returned by commands or LLM tools |
 | `capture.enabled` (启用对话沉淀) | `true` | Capture completed conversation turns |
 | `capture.max_user_chars` (用户消息最大长度) | `1000` | Maximum stored user message length |
 | `capture.max_assistant_chars` (机器人回复最大长度) | `4000` | Maximum stored assistant response length |
-| `capture.skip_keywords` (跳过沉淀关键词) | see default config | Skip automatic capture when the user message contains these keywords, avoiding repeated storage of memory-inspection turns |
 
 ## Commands
 
@@ -107,6 +105,14 @@ Searches memories stored in agentmemory.
 
 Saves one long-term memory manually.
 
+### Delete Memory
+
+```text
+/am_forget obs_xxx
+```
+
+Deletes an explicit memory by `memory_id` or `observation_id`.
+
 ## Privacy Notes
 
 The plugin sends text conversation snippets to the configured agentmemory service.
@@ -121,7 +127,7 @@ The current version does not upload:
 - Video
 - Raw platform event payloads
 
-Recalled memories are injected as untrusted background text, and the plugin tells the model not to follow instructions inside memory snippets. Even so, avoid storing secrets, API keys, or content that should not be referenced long term.
+Memories returned by LLM tools are untrusted background text. Even so, avoid storing secrets, API keys, or content that should not be referenced long term.
 
 If agentmemory runs on a remote server and uses `AGENTMEMORY_SECRET`, use HTTPS, private networking, or an SSH tunnel to avoid sending bearer tokens and chat content over plaintext HTTP.
 
@@ -141,21 +147,20 @@ Knowledge bases are best for documents, manuals, and reference material. agentme
 
 ### What happens if agentmemory is not running?
 
-`/am_status` reports it as unavailable. Automatic recall and capture are skipped, and normal chat continues.
+`/am_status` reports it as unavailable. Memory-related features are skipped, and normal chat continues.
 
 ## Status
 
 This is a minimal usable version focused on stable integration:
 
-- Automatic recall
-- Automatic capture
+- LLM tools for model-initiated search, save, and forget
 - Manual search
 - Manual remember
+- Manual forget
 - Health check
 
 Potential future improvements:
 
-- Optional LLM tools for model-initiated memory search/write.
 - Session or group allowlists.
 - Dashboard page.
 - More memory management commands.

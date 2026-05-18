@@ -22,21 +22,21 @@
     "type": "float",
     "default": 3.0
   },
+  "admin_only": {
+    "description": "仅管理员可使用记忆",
+    "type": "bool",
+    "default": false,
+    "hint": "开启后，只有 AstrBot 判定为 admin 的用户会触发记忆沉淀、命令和 LLM 工具。"
+  },
   "recall": {
     "description": "记忆召回",
     "type": "object",
     "items": {
-      "enabled": {
-        "description": "启用记忆召回",
-        "type": "bool",
-        "default": true,
-        "hint": "开启后，会在请求大模型前从 agentmemory 搜索相关长期记忆并注入上下文。"
-      },
       "limit": {
         "description": "召回数量上限",
         "type": "int",
         "default": 5,
-        "hint": "每次最多注入多少条相关记忆。建议不要过大，避免 prompt 过长。"
+        "hint": "命令或 LLM 工具每次最多返回多少条相关记忆。"
       }
     }
   },
@@ -59,21 +59,6 @@
         "description": "机器人回复最大长度",
         "type": "int",
         "default": 4000
-      },
-      "skip_keywords": {
-        "description": "跳过沉淀关键词",
-        "type": "list",
-        "items": {
-          "type": "string"
-        },
-        "default": [
-          "看看记忆",
-          "查看记忆",
-          "记忆里有什么",
-          "我是谁",
-          "你记得什么"
-        ],
-        "hint": "用户消息包含这些关键词时，不把本轮回复自动写入 agentmemory，避免把记忆查询和不确定回答反复沉淀。"
       }
     }
   }
