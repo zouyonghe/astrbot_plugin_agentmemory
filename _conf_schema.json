@@ -1,0 +1,66 @@
+{
+  "enabled": {
+    "description": "Enable agentmemory integration",
+    "type": "bool",
+    "default": true
+  },
+  "base_url": {
+    "description": "agentmemory REST API base URL",
+    "type": "string",
+    "default": "http://localhost:3111",
+    "hint": "Start agentmemory with `npx @agentmemory/agentmemory`."
+  },
+  "secret": {
+    "description": "agentmemory bearer token",
+    "type": "string",
+    "default": "",
+    "hint": "Set this when AGENTMEMORY_SECRET is configured."
+  },
+  "project": {
+    "description": "agentmemory project name",
+    "type": "string",
+    "default": "astrbot"
+  },
+  "timeout_seconds": {
+    "description": "HTTP timeout in seconds",
+    "type": "float",
+    "default": 3.0
+  },
+  "recall": {
+    "description": "Recall settings",
+    "type": "object",
+    "items": {
+      "enabled": {
+        "description": "Inject recalled memory before LLM requests",
+        "type": "bool",
+        "default": true
+      },
+      "limit": {
+        "description": "Maximum recalled memories",
+        "type": "int",
+        "default": 5
+      }
+    }
+  },
+  "capture": {
+    "description": "Capture settings",
+    "type": "object",
+    "items": {
+      "enabled": {
+        "description": "Capture completed conversation turns",
+        "type": "bool",
+        "default": true
+      },
+      "max_user_chars": {
+        "description": "Maximum user message characters to store",
+        "type": "int",
+        "default": 1000
+      },
+      "max_assistant_chars": {
+        "description": "Maximum assistant response characters to store",
+        "type": "int",
+        "default": 4000
+      }
+    }
+  }
+}
