@@ -70,16 +70,15 @@ The plugin can be configured in the AstrBot WebUI.
 
 | Field | Default | Description |
 | --- | --- | --- |
-| `enabled` | `true` | Enable or disable the plugin |
-| `base_url` | `http://localhost:3111` | agentmemory REST API base URL |
-| `secret` | empty | Bearer token for agentmemory |
-| `project` | `astrbot` | Project name stored in agentmemory |
-| `timeout_seconds` | `3.0` | HTTP timeout |
-| `recall.enabled` | `true` | Recall memory before LLM requests |
-| `recall.limit` | `5` | Maximum recalled memories per request |
-| `capture.enabled` | `true` | Capture completed conversation turns |
-| `capture.max_user_chars` | `1000` | Maximum stored user message length |
-| `capture.max_assistant_chars` | `4000` | Maximum stored assistant response length |
+| `base_url` (agentmemory 服务地址) | `http://localhost:3111` | agentmemory REST API base URL |
+| `secret` (访问密钥) | empty | Bearer token for agentmemory |
+| `project` (项目名称) | `astrbot` | Project name stored in agentmemory |
+| `timeout_seconds` (请求超时时间) | `3.0` | HTTP timeout in seconds |
+| `recall.enabled` (启用记忆召回) | `true` | Recall memory before LLM requests |
+| `recall.limit` (召回数量上限) | `5` | Maximum recalled memories per request |
+| `capture.enabled` (启用对话沉淀) | `true` | Capture completed conversation turns |
+| `capture.max_user_chars` (用户消息最大长度) | `1000` | Maximum stored user message length |
+| `capture.max_assistant_chars` (机器人回复最大长度) | `4000` | Maximum stored assistant response length |
 
 ## Commands
 

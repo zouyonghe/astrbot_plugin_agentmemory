@@ -1,63 +1,62 @@
 {
-  "enabled": {
-    "description": "Enable agentmemory integration",
-    "type": "bool",
-    "default": true
-  },
   "base_url": {
-    "description": "agentmemory REST API base URL",
+    "description": "agentmemory 服务地址",
     "type": "string",
     "default": "http://localhost:3111",
-    "hint": "Start agentmemory with `npx @agentmemory/agentmemory`."
+    "hint": "先运行 `npx @agentmemory/agentmemory` 启动 agentmemory 服务。"
   },
   "secret": {
-    "description": "agentmemory bearer token",
+    "description": "访问密钥",
     "type": "string",
     "default": "",
-    "hint": "Set this when AGENTMEMORY_SECRET is configured."
+    "hint": "仅当 agentmemory 配置了 AGENTMEMORY_SECRET 时需要填写。"
   },
   "project": {
-    "description": "agentmemory project name",
+    "description": "项目名称",
     "type": "string",
-    "default": "astrbot"
+    "default": "astrbot",
+    "hint": "写入 agentmemory 时使用的项目名，用于区分不同机器人或部署环境。"
   },
   "timeout_seconds": {
-    "description": "HTTP timeout in seconds",
+    "description": "请求超时时间（秒）",
     "type": "float",
     "default": 3.0
   },
   "recall": {
-    "description": "Recall settings",
+    "description": "记忆召回",
     "type": "object",
     "items": {
       "enabled": {
-        "description": "Inject recalled memory before LLM requests",
+        "description": "启用记忆召回",
         "type": "bool",
-        "default": true
+        "default": true,
+        "hint": "开启后，会在请求大模型前从 agentmemory 搜索相关长期记忆并注入上下文。"
       },
       "limit": {
-        "description": "Maximum recalled memories",
+        "description": "召回数量上限",
         "type": "int",
-        "default": 5
+        "default": 5,
+        "hint": "每次最多注入多少条相关记忆。建议不要过大，避免 prompt 过长。"
       }
     }
   },
   "capture": {
-    "description": "Capture settings",
+    "description": "对话沉淀",
     "type": "object",
     "items": {
       "enabled": {
-        "description": "Capture completed conversation turns",
+        "description": "启用对话沉淀",
         "type": "bool",
-        "default": true
+        "default": true,
+        "hint": "开启后，会在机器人回复后把本轮纯文本对话片段写入 agentmemory。"
       },
       "max_user_chars": {
-        "description": "Maximum user message characters to store",
+        "description": "用户消息最大长度",
         "type": "int",
         "default": 1000
       },
       "max_assistant_chars": {
-        "description": "Maximum assistant response characters to store",
+        "description": "机器人回复最大长度",
         "type": "int",
         "default": 4000
       }

@@ -74,16 +74,15 @@ pip install -r astrbot_plugin_agentmemory/requirements.txt
 
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `enabled` | `true` | 是否启用插件 |
-| `base_url` | `http://localhost:3111` | agentmemory REST API 地址 |
-| `secret` | 空 | agentmemory 的 Bearer Token |
-| `project` | `astrbot` | 写入 agentmemory 的项目名 |
-| `timeout_seconds` | `3.0` | 请求超时时间 |
-| `recall.enabled` | `true` | 是否在请求大模型前召回记忆 |
-| `recall.limit` | `5` | 每次最多召回多少条记忆 |
-| `capture.enabled` | `true` | 是否在回复后写入对话片段 |
-| `capture.max_user_chars` | `1000` | 写入的用户消息最大长度 |
-| `capture.max_assistant_chars` | `4000` | 写入的机器人回复最大长度 |
+| `base_url`（agentmemory 服务地址） | `http://localhost:3111` | agentmemory REST API 地址 |
+| `secret`（访问密钥） | 空 | agentmemory 的 Bearer Token |
+| `project`（项目名称） | `astrbot` | 写入 agentmemory 的项目名 |
+| `timeout_seconds`（请求超时时间） | `3.0` | HTTP 请求超时时间，单位为秒 |
+| `recall.enabled`（启用记忆召回） | `true` | 是否在请求大模型前召回记忆 |
+| `recall.limit`（召回数量上限） | `5` | 每次最多召回多少条记忆 |
+| `capture.enabled`（启用对话沉淀） | `true` | 是否在回复后写入对话片段 |
+| `capture.max_user_chars`（用户消息最大长度） | `1000` | 写入的用户消息最大长度 |
+| `capture.max_assistant_chars`（机器人回复最大长度） | `4000` | 写入的机器人回复最大长度 |
 
 ## 可用命令
 

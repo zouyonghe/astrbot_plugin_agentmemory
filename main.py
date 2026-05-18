@@ -18,9 +18,6 @@ class AgentMemoryPlugin(star.Star):
         super().__init__(context)
         self.config = config
 
-    def _enabled(self) -> bool:
-        return bool(self.config.get("enabled", True))
-
     def _client(self) -> AgentMemoryClient:
         return AgentMemoryClient(
             base_url=str(self.config.get("base_url", "http://localhost:3111")),
@@ -89,7 +86,7 @@ class AgentMemoryPlugin(star.Star):
     async def inject_agentmemory_context(
         self, event: AstrMessageEvent, req: ProviderRequest
     ) -> None:
-        if not self._enabled() or not req.prompt:
+        if not req.prompt:
             return
 
         recall = self._recall_config()
@@ -117,9 +114,6 @@ class AgentMemoryPlugin(star.Star):
     async def capture_agentmemory_observation(
         self, event: AstrMessageEvent, resp: LLMResponse
     ) -> None:
-        if not self._enabled():
-            return
-
         capture = self._capture_config()
         if not bool(capture.get("enabled", True)):
             return
@@ -150,9 +144,6 @@ class AgentMemoryPlugin(star.Star):
     @filter.command("am_status")
     async def am_status(self, event: AstrMessageEvent):
         """Check agentmemory service status."""
-        if not self._enabled():
-            yield event.plain_result("agentmemory plugin is disabled.")
-            return
         try:
             payload = await self._client().health()
         except (httpx.HTTPError, ValueError) as exc:
