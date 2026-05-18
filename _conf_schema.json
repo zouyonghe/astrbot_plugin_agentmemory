@@ -59,6 +59,21 @@
         "description": "机器人回复最大长度",
         "type": "int",
         "default": 4000
+      },
+      "skip_keywords": {
+        "description": "跳过沉淀关键词",
+        "type": "list",
+        "items": {
+          "type": "string"
+        },
+        "default": [
+          "看看记忆",
+          "查看记忆",
+          "记忆里有什么",
+          "我是谁",
+          "你记得什么"
+        ],
+        "hint": "用户消息包含这些关键词时，不把本轮回复自动写入 agentmemory，避免把记忆查询和不确定回答反复沉淀。"
       }
     }
   }

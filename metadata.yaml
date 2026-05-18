@@ -2,4 +2,4 @@ name: astrbot_plugin_agentmemory
 desc: Connect AstrBot to agentmemory for long-term memory recall and capture.
 author: buding
 version: 0.1.0
-repo: https://github.com/buding/astrbot_plugin_agentmemory
+repo: https://github.com/zouyonghe/astrbot_plugin_agentmemory

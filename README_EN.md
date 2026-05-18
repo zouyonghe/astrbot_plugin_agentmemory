@@ -79,6 +79,7 @@ The plugin can be configured in the AstrBot WebUI.
 | `capture.enabled` (启用对话沉淀) | `true` | Capture completed conversation turns |
 | `capture.max_user_chars` (用户消息最大长度) | `1000` | Maximum stored user message length |
 | `capture.max_assistant_chars` (机器人回复最大长度) | `4000` | Maximum stored assistant response length |
+| `capture.skip_keywords` (跳过沉淀关键词) | see default config | Skip automatic capture when the user message contains these keywords, avoiding repeated storage of memory-inspection turns |
 
 ## Commands
 
@@ -110,6 +111,8 @@ Saves one long-term memory manually.
 
 The plugin sends text conversation snippets to the configured agentmemory service.
 
+In group chats, this means group-chat text may also be written to agentmemory. Enable it only in conversations where long-term memory is intended, and notify participants when appropriate.
+
 The current version does not upload:
 
 - Images
@@ -117,6 +120,8 @@ The current version does not upload:
 - Audio
 - Video
 - Raw platform event payloads
+
+Recalled memories are injected as untrusted background text, and the plugin tells the model not to follow instructions inside memory snippets. Even so, avoid storing secrets, API keys, or content that should not be referenced long term.
 
 If agentmemory runs on a remote server and uses `AGENTMEMORY_SECRET`, use HTTPS, private networking, or an SSH tunnel to avoid sending bearer tokens and chat content over plaintext HTTP.
 

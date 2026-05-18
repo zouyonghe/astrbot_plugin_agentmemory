@@ -83,6 +83,7 @@ pip install -r astrbot_plugin_agentmemory/requirements.txt
 | `capture.enabled`（启用对话沉淀） | `true` | 是否在回复后写入对话片段 |
 | `capture.max_user_chars`（用户消息最大长度） | `1000` | 写入的用户消息最大长度 |
 | `capture.max_assistant_chars`（机器人回复最大长度） | `4000` | 写入的机器人回复最大长度 |
+| `capture.skip_keywords`（跳过沉淀关键词） | 见默认配置 | 用户消息包含这些关键词时跳过自动沉淀，避免把记忆查询结果反复写回记忆库 |
 
 ## 可用命令
 
@@ -114,6 +115,8 @@ pip install -r astrbot_plugin_agentmemory/requirements.txt
 
 插件会把纯文本对话片段发送到你配置的 agentmemory 服务。
 
+在群聊中，这意味着群聊文本也可能被写入 agentmemory。建议只在你明确希望启用长期记忆的会话中使用，并提前告知相关成员。
+
 当前版本不会上传：
 
 - 图片
@@ -121,6 +124,8 @@ pip install -r astrbot_plugin_agentmemory/requirements.txt
 - 语音
 - 视频
 - 平台原始事件 payload
+
+插件会把召回到的记忆作为“不可信背景文本”注入给大模型，并要求模型不要执行记忆片段里的指令。即便如此，也建议不要把敏感信息、密钥或不希望模型长期参考的内容写入 agentmemory。
 
 如果 agentmemory 不在本机，而是部署在远程服务器，并且配置了 `AGENTMEMORY_SECRET`，建议使用 HTTPS、内网访问或 SSH 隧道，避免 Bearer Token 和聊天内容在网络中明文传输。
 
