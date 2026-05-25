@@ -13,24 +13,36 @@ from astrbot_plugin_agentmemory.main import (  # noqa: E402
 
 
 def test_build_sender_scope_uses_platform_and_sender_id():
-    assert build_sender_scope("webchat", "buding") == "webchat:user:buding"
+    assert (
+        build_sender_scope("bot-a", "webchat", "buding")
+        == "bot-a:webchat:user:buding"
+    )
 
 
 def test_filter_results_for_session_keeps_only_matching_session():
     payload = {
         "mode": "compact",
         "results": [
-            {"obsId": "obs_1", "sessionId": "webchat:user:buding"},
-            {"obsId": "obs_2", "sessionId": "webchat:user:someone_else"},
+            {"obsId": "obs_1", "sessionId": "bot-a:webchat:user:buding"},
+            {"obsId": "obs_2", "sessionId": "bot-b:webchat:user:buding"},
             {"obsId": "obs_3"},
         ],
     }
 
-    filtered = filter_results_for_session(payload, "webchat:user:buding")
+    filtered = filter_results_for_session(payload, "bot-a:webchat:user:buding")
 
     assert filtered["results"] == [
-        {"obsId": "obs_1", "sessionId": "webchat:user:buding"}
+        {"obsId": "obs_1", "sessionId": "bot-a:webchat:user:buding"}
     ]
+
+
+def test_format_observe_result_reads_top_level_observation_id():
+    payload = {"observationId": "obs_123"}
+
+    assert (
+        AgentMemoryPlugin._format_observe_result(payload)
+        == "Memory saved (observation_id=obs_123)."
+    )
 
 
 def test_admin_only_blocks_non_admin_memory_access():

@@ -2,7 +2,7 @@
 
 An AstrBot plugin for integrating with agentmemory long-term memory.
 
-This plugin connects AstrBot to [agentmemory](https://github.com/rohitg00/agentmemory) through its REST API. It keeps AstrBot's built-in conversation management unchanged and adds sender_id-scoped long-term memory. The plugin no longer injects memories into prompts automatically; it exposes commands and LLM tools so the model or admins can search, save, and delete memories explicitly.
+This plugin connects AstrBot to [agentmemory](https://github.com/rohitg00/agentmemory) through its REST API. It keeps AstrBot's built-in conversation management unchanged and adds project + sender_id-scoped long-term memory. The plugin no longer injects memories into prompts automatically; it exposes commands and LLM tools so the model or admins can search, save, and delete memories explicitly.
 
 中文文档: [README.md](README.md)
 
@@ -71,7 +71,7 @@ The plugin can be configured in the AstrBot WebUI.
 | --- | --- | --- |
 | `base_url` (agentmemory 服务地址) | `http://localhost:3111` | agentmemory REST API base URL |
 | `secret` (访问密钥) | empty | Bearer token for agentmemory |
-| `project` (项目名称) | `astrbot` | Project name stored in agentmemory |
+| `project` (项目名称) | `astrbot` | Project name used to separate bots or deployments; included in the memory session scope |
 | `timeout_seconds` (请求超时时间) | `3.0` | HTTP timeout in seconds |
 | `admin_only` (仅管理员可使用记忆) | `false` | Restrict capture, commands, and LLM tools to admins |
 | `recall.limit` (召回数量上限) | `5` | Maximum memories returned by commands or LLM tools |
@@ -111,7 +111,7 @@ Saves one long-term memory manually.
 /am_forget obs_xxx
 ```
 
-Deletes an explicit memory by `memory_id` or `observation_id`.
+Deletes an explicit memory by `observation_id` within the current sender scope. The plugin does not expose global `memory_id` deletion to avoid cross-user deletion on shared agentmemory services.
 
 ## Privacy Notes
 

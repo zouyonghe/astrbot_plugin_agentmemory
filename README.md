@@ -2,7 +2,7 @@
 
 AstrBot 的 agentmemory 长期记忆接入插件。
 
-本插件通过 REST API 连接 [agentmemory](https://github.com/rohitg00/agentmemory)，在不改动 AstrBot 内置会话管理的前提下，为机器人增加“按 sender_id 作用域的长期记忆”能力。插件不再自动把记忆注入 prompt，而是提供 LLM tools 和命令，让模型或管理员主动搜索、记录和删除记忆。
+本插件通过 REST API 连接 [agentmemory](https://github.com/rohitg00/agentmemory)，在不改动 AstrBot 内置会话管理的前提下，为机器人增加“按 project + sender_id 作用域的长期记忆”能力。插件不再自动把记忆注入 prompt，而是提供 LLM tools 和命令，让模型或管理员主动搜索、记录和删除记忆。
 
 English documentation: [README_EN.md](README_EN.md)
 
@@ -75,7 +75,7 @@ pip install -r astrbot_plugin_agentmemory/requirements.txt
 | --- | --- | --- |
 | `base_url`（agentmemory 服务地址） | `http://localhost:3111` | agentmemory REST API 地址 |
 | `secret`（访问密钥） | 空 | agentmemory 的 Bearer Token |
-| `project`（项目名称） | `astrbot` | 写入 agentmemory 的项目名 |
+| `project`（项目名称） | `astrbot` | 用于区分不同机器人或部署环境，会参与记忆 session 作用域 |
 | `timeout_seconds`（请求超时时间） | `3.0` | HTTP 请求超时时间，单位为秒 |
 | `admin_only`（仅管理员可使用记忆） | `false` | 开启后，只有管理员会触发自动沉淀、命令和 LLM tools |
 | `recall.limit`（召回数量上限） | `5` | 命令或 LLM tools 每次最多返回多少条记忆 |
@@ -115,7 +115,7 @@ pip install -r astrbot_plugin_agentmemory/requirements.txt
 /am_forget obs_xxx
 ```
 
-用于按 `memory_id` 或 `observation_id` 删除明确的记忆。
+用于按 `observation_id` 删除当前 sender 作用域内的明确记忆。为避免共享 agentmemory 服务中的越权删除，插件不开放全局 `memory_id` 删除。
 
 ## 隐私说明
 

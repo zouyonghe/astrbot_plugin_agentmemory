@@ -15,7 +15,7 @@
     "description": "项目名称",
     "type": "string",
     "default": "astrbot",
-    "hint": "写入 agentmemory 时使用的项目名，用于区分不同机器人或部署环境。"
+    "hint": "用于区分不同机器人或部署环境，会参与记忆 session 作用域。"
   },
   "timeout_seconds": {
     "description": "请求超时时间（秒）",

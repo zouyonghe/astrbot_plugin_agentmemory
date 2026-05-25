@@ -14,10 +14,11 @@ from astrbot.core.star.filter.command import GreedyStr
 from .agentmemory_client import AgentMemoryClient
 
 
-def build_sender_scope(platform_id: str, sender_id: str) -> str:
+def build_sender_scope(project: str, platform_id: str, sender_id: str) -> str:
+    project_scope = str(project or "astrbot").strip() or "astrbot"
     platform = str(platform_id or "unknown").strip() or "unknown"
     sender = str(sender_id or "unknown").strip() or "unknown"
-    return f"{platform}:user:{sender}"
+    return f"{project_scope}:{platform}:user:{sender}"
 
 
 def filter_results_for_session(
@@ -74,7 +75,7 @@ class AgentMemoryPlugin(star.Star):
         if not sender_id and hasattr(event, "get_session_id"):
             sender_id = event.get_session_id()
         platform_id = event.get_platform_id() if hasattr(event, "get_platform_id") else ""
-        return build_sender_scope(platform_id, sender_id)
+        return build_sender_scope(self._project(), platform_id, sender_id)
 
     @staticmethod
     def _safe_int(value: Any, default: int, *, minimum: int = 1) -> int:
@@ -161,7 +162,7 @@ class AgentMemoryPlugin(star.Star):
     async def _search_memory_with_text(
         self, query: str, limit: int, session_id: str
     ) -> dict[str, Any]:
-        payload = await self._client().smart_search(query, limit=limit)
+        payload = await self._client().smart_search(query, limit=max(limit * 10, limit))
         payload = filter_results_for_session(payload, session_id)
         if payload.get("mode") != "compact":
             return payload
@@ -269,23 +270,26 @@ class AgentMemoryPlugin(star.Star):
 
     @filter.command("am_forget")
     async def am_forget(self, event: AstrMessageEvent, identifier: GreedyStr = ""):
-        """Forget a memory by memory_id or observation_id."""
+        """Forget a memory by observation_id."""
         if not self._memory_allowed(event):
             yield event.plain_result("agentmemory is restricted to administrators.")
             return
 
         identifier = str(identifier).strip()
         if not identifier:
-            yield event.plain_result("Usage: /am_forget <memory_id|observation_id>")
+            yield event.plain_result("Usage: /am_forget <observation_id>")
+            return
+
+        if not identifier.startswith("obs_"):
+            yield event.plain_result(
+                "Use an observation_id like obs_xxx. memory_id deletion is not allowed."
+            )
             return
 
         try:
-            if identifier.startswith("obs_"):
-                await self._client().forget_observations(
-                    self._memory_session_id(event), [identifier]
-                )
-            else:
-                await self._client().forget_memory(identifier)
+            await self._client().forget_observations(
+                self._memory_session_id(event), [identifier]
+            )
         except (httpx.HTTPError, ValueError) as exc:
             yield event.plain_result(f"agentmemory forget failed: {exc}")
             return
@@ -310,8 +314,12 @@ class AgentMemoryPlugin(star.Star):
 
     @staticmethod
     def _format_observe_result(payload: dict[str, Any]) -> str:
+        observation_id = (
+            payload.get("observationId") if isinstance(payload, dict) else None
+        )
         observation = payload.get("observation") if isinstance(payload, dict) else None
-        observation_id = observation.get("id") if isinstance(observation, dict) else None
+        if not observation_id and isinstance(observation, dict):
+            observation_id = observation.get("id")
         suffix = f" (observation_id={observation_id})" if observation_id else ""
         return f"Memory saved{suffix}."
 
@@ -371,7 +379,7 @@ class AgentMemoryPlugin(star.Star):
         """Delete explicit long-term memory entries from agentmemory.
 
         Args:
-            memory_id(string): Exact memory id to delete. Leave empty when deleting observations.
+            memory_id(string): Unsupported. Delete observations instead.
             observation_ids(list[string]): Exact observation ids to delete for this user.
         """
         if not self._memory_allowed(event):
@@ -381,16 +389,15 @@ class AgentMemoryPlugin(star.Star):
         observation_ids = [
             str(item).strip() for item in (observation_ids or []) if str(item).strip()
         ]
-        if not memory_id and not observation_ids:
-            return "Provide a memory_id or one or more observation_ids to forget."
+        if memory_id:
+            return "memory_id deletion is not allowed. Provide observation_ids to forget."
+        if not observation_ids:
+            return "Provide one or more observation_ids to forget."
 
         try:
-            if memory_id:
-                await self._client().forget_memory(memory_id)
-            if observation_ids:
-                await self._client().forget_observations(
-                    self._memory_session_id(event), observation_ids
-                )
+            await self._client().forget_observations(
+                self._memory_session_id(event), observation_ids
+            )
         except (httpx.HTTPError, ValueError) as exc:
             return f"agentmemory forget failed: {exc}"
 
