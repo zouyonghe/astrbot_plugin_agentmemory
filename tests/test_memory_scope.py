@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
+import httpx
+
 PLUGIN_PARENT = Path(__file__).resolve().parents[1].parent
 sys.path.insert(0, str(PLUGIN_PARENT))
 
@@ -120,6 +122,19 @@ def test_search_memory_uses_configured_overfetch_settings():
     client.smart_search.assert_awaited_once_with("deploy notes", limit=20)
 
 
+def test_search_memory_caps_pathological_overfetch_config():
+    client = Mock()
+    client.smart_search = AsyncMock(return_value={"mode": "expanded", "results": []})
+    plugin = _plugin_with_client(client)
+    plugin.config["recall"] = {"overfetch_factor": 1000, "overfetch_max_results": 1000}
+
+    asyncio.run(
+        plugin._search_memory_with_text("deploy notes", 50, "bot-a:webchat:user:buding")
+    )
+
+    client.smart_search.assert_awaited_once_with("deploy notes", limit=200)
+
+
 def test_format_observe_result_reads_top_level_observation_id():
     payload = {"observationId": "obs_123"}
 
@@ -200,6 +215,23 @@ def test_am_forget_valid_obs_identifier_calls_forget_observations():
     result = asyncio.run(_collect_async_generator(plugin.am_forget(_event(), "obs_123")))
 
     assert result == ["Memory forgotten."]
+    client.forget_observations.assert_awaited_once_with(
+        "bot-a:webchat:user:buding", ["obs_123"]
+    )
+    client.forget_memory.assert_not_called()
+
+
+def test_am_forget_obs_identifier_handles_http_error():
+    client = Mock()
+    client.forget_memory = AsyncMock()
+    client.forget_observations = AsyncMock(side_effect=httpx.HTTPError("boom"))
+    plugin = _plugin_with_client(client)
+
+    result = asyncio.run(_collect_async_generator(plugin.am_forget(_event(), "obs_123")))
+
+    assert len(result) == 1
+    assert result[0].startswith("agentmemory forget failed: ")
+    assert "boom" in result[0]
     client.forget_observations.assert_awaited_once_with(
         "bot-a:webchat:user:buding", ["obs_123"]
     )

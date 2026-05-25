@@ -15,11 +15,13 @@ from .agentmemory_client import AgentMemoryClient
 
 
 SEARCH_OVERFETCH_FACTOR = 10
+SEARCH_OVERFETCH_FACTOR_MAX = 20
 SEARCH_OVERFETCH_MAX_RESULTS = 50
+SEARCH_OVERFETCH_MAX_RESULTS_CAP = 200
 MEMORY_ID_FORGET_NOT_ALLOWED = "memory_id deletion is not allowed."
 
 
-def build_sender_scope(project: str, platform_id: str, sender_id: str) -> str:
+def build_sender_scope(project: str | None, platform_id: str, sender_id: str) -> str:
     project_scope = str(project or "astrbot").strip() or "astrbot"
     platform = str(platform_id or "unknown").strip() or "unknown"
     sender = str(sender_id or "unknown").strip() or "unknown"
@@ -48,6 +50,7 @@ class AgentMemoryPlugin(star.Star):
     def __init__(self, context: star.Context, config: AstrBotConfig) -> None:
         super().__init__(context)
         self.config = config
+        self._warned_default_project = False
 
     def _client(self) -> AgentMemoryClient:
         return AgentMemoryClient(
@@ -59,8 +62,14 @@ class AgentMemoryPlugin(star.Star):
         )
 
     def _project(self) -> str:
-        project = str(self.config.get("project", "astrbot")).strip()
-        return project or "astrbot"
+        project_value = self.config.get("project", "astrbot")
+        project = str(project_value or "").strip()
+        if project:
+            return project
+        if not getattr(self, "_warned_default_project", False):
+            logger.warning("agentmemory project is blank; using default 'astrbot' scope.")
+            self._warned_default_project = True
+        return "astrbot"
 
     def _recall_config(self) -> dict[str, Any]:
         recall = self.config.get("recall", {})
@@ -74,6 +83,7 @@ class AgentMemoryPlugin(star.Star):
         return self._safe_int(
             self._recall_config().get("overfetch_factor", SEARCH_OVERFETCH_FACTOR),
             SEARCH_OVERFETCH_FACTOR,
+            maximum=SEARCH_OVERFETCH_FACTOR_MAX,
         )
 
     def _search_overfetch_max_results(self) -> int:
@@ -82,6 +92,7 @@ class AgentMemoryPlugin(star.Star):
                 "overfetch_max_results", SEARCH_OVERFETCH_MAX_RESULTS
             ),
             SEARCH_OVERFETCH_MAX_RESULTS,
+            maximum=SEARCH_OVERFETCH_MAX_RESULTS_CAP,
         )
 
     def _memory_allowed(self, event: AstrMessageEvent) -> bool:
@@ -97,12 +108,18 @@ class AgentMemoryPlugin(star.Star):
         return build_sender_scope(self._project(), platform_id, sender_id)
 
     @staticmethod
-    def _safe_int(value: Any, default: int, *, minimum: int = 1) -> int:
+    def _safe_int(
+        value: Any, default: int, *, minimum: int = 1, maximum: int | None = None
+    ) -> int:
         try:
             parsed = int(value)
         except (TypeError, ValueError):
             return default
-        return parsed if parsed >= minimum else default
+        if parsed < minimum:
+            return default
+        if maximum is not None and parsed > maximum:
+            return maximum
+        return parsed
 
     @staticmethod
     def _safe_float(value: Any, default: float, *, minimum: float = 0.1) -> float:

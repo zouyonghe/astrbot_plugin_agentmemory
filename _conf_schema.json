@@ -42,13 +42,13 @@
         "description": "召回过滤前的过量检索倍数",
         "type": "int",
         "default": 10,
-        "hint": "为了按会话过滤结果，会先请求 limit 的多少倍候选记忆。"
+        "hint": "为了按会话过滤结果，会先请求 limit 的多少倍候选记忆。运行时最大值为 20。"
       },
       "overfetch_max_results": {
         "description": "召回过滤前的最大检索数量",
         "type": "int",
         "default": 50,
-        "hint": "限制每次向 agentmemory 请求的候选记忆总数。"
+        "hint": "限制每次向 agentmemory 请求的候选记忆总数。运行时最大值为 200。"
       }
     }
   },
