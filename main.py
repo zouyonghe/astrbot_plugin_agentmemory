@@ -14,6 +14,10 @@ from astrbot.core.star.filter.command import GreedyStr
 from .agentmemory_client import AgentMemoryClient
 
 
+SEARCH_OVERFETCH_FACTOR = 10
+SEARCH_OVERFETCH_MAX_RESULTS = 50
+
+
 def build_sender_scope(project: str, platform_id: str, sender_id: str) -> str:
     project_scope = str(project or "astrbot").strip() or "astrbot"
     platform = str(platform_id or "unknown").strip() or "unknown"
@@ -162,7 +166,11 @@ class AgentMemoryPlugin(star.Star):
     async def _search_memory_with_text(
         self, query: str, limit: int, session_id: str
     ) -> dict[str, Any]:
-        payload = await self._client().smart_search(query, limit=max(limit * 10, limit))
+        search_limit = min(
+            limit * SEARCH_OVERFETCH_FACTOR,
+            max(limit, SEARCH_OVERFETCH_MAX_RESULTS),
+        )
+        payload = await self._client().smart_search(query, limit=search_limit)
         payload = filter_results_for_session(payload, session_id)
         if payload.get("mode") != "compact":
             return payload
@@ -393,6 +401,8 @@ class AgentMemoryPlugin(star.Star):
             return "memory_id deletion is not allowed. Provide observation_ids to forget."
         if not observation_ids:
             return "Provide one or more observation_ids to forget."
+        if any(not item.startswith("obs_") for item in observation_ids):
+            return "Use observation_ids like obs_xxx. memory_id deletion is not allowed."
 
         try:
             await self._client().forget_observations(
