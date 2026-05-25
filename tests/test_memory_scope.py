@@ -95,6 +95,31 @@ def test_search_memory_caps_overfetch_limit():
     client.smart_search.assert_awaited_once_with("deploy notes", limit=50)
 
 
+def test_search_memory_caps_large_limits_to_overfetch_max_results():
+    client = Mock()
+    client.smart_search = AsyncMock(return_value={"mode": "expanded", "results": []})
+    plugin = _plugin_with_client(client)
+
+    asyncio.run(
+        plugin._search_memory_with_text("deploy notes", 100, "bot-a:webchat:user:buding")
+    )
+
+    client.smart_search.assert_awaited_once_with("deploy notes", limit=50)
+
+
+def test_search_memory_uses_configured_overfetch_settings():
+    client = Mock()
+    client.smart_search = AsyncMock(return_value={"mode": "expanded", "results": []})
+    plugin = _plugin_with_client(client)
+    plugin.config["recall"] = {"overfetch_factor": 3, "overfetch_max_results": 20}
+
+    asyncio.run(
+        plugin._search_memory_with_text("deploy notes", 8, "bot-a:webchat:user:buding")
+    )
+
+    client.smart_search.assert_awaited_once_with("deploy notes", limit=20)
+
+
 def test_format_observe_result_reads_top_level_observation_id():
     payload = {"observationId": "obs_123"}
 

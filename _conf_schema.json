@@ -37,6 +37,18 @@
         "type": "int",
         "default": 5,
         "hint": "命令或 LLM 工具每次最多返回多少条相关记忆。"
+      },
+      "overfetch_factor": {
+        "description": "召回过滤前的过量检索倍数",
+        "type": "int",
+        "default": 10,
+        "hint": "为了按会话过滤结果，会先请求 limit 的多少倍候选记忆。"
+      },
+      "overfetch_max_results": {
+        "description": "召回过滤前的最大检索数量",
+        "type": "int",
+        "default": 50,
+        "hint": "限制每次向 agentmemory 请求的候选记忆总数。"
       }
     }
   },

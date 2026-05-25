@@ -16,6 +16,7 @@ from .agentmemory_client import AgentMemoryClient
 
 SEARCH_OVERFETCH_FACTOR = 10
 SEARCH_OVERFETCH_MAX_RESULTS = 50
+MEMORY_ID_FORGET_NOT_ALLOWED = "memory_id deletion is not allowed."
 
 
 def build_sender_scope(project: str, platform_id: str, sender_id: str) -> str:
@@ -69,6 +70,20 @@ class AgentMemoryPlugin(star.Star):
         capture = self.config.get("capture", {})
         return capture if isinstance(capture, dict) else {}
 
+    def _search_overfetch_factor(self) -> int:
+        return self._safe_int(
+            self._recall_config().get("overfetch_factor", SEARCH_OVERFETCH_FACTOR),
+            SEARCH_OVERFETCH_FACTOR,
+        )
+
+    def _search_overfetch_max_results(self) -> int:
+        return self._safe_int(
+            self._recall_config().get(
+                "overfetch_max_results", SEARCH_OVERFETCH_MAX_RESULTS
+            ),
+            SEARCH_OVERFETCH_MAX_RESULTS,
+        )
+
     def _memory_allowed(self, event: AstrMessageEvent) -> bool:
         if not bool(self.config.get("admin_only", False)):
             return True
@@ -102,6 +117,14 @@ class AgentMemoryPlugin(star.Star):
         if max_chars <= 0 or len(text) <= max_chars:
             return text
         return text[:max_chars].rstrip() + "..."
+
+    @staticmethod
+    def _invalid_observation_ids(observation_ids: list[str]) -> bool:
+        return any(not item.startswith("obs_") for item in observation_ids)
+
+    @staticmethod
+    def _memory_id_forget_error(instruction: str) -> str:
+        return f"{instruction} {MEMORY_ID_FORGET_NOT_ALLOWED}"
 
     @staticmethod
     def _extract_memory_text(result: Any) -> str:
@@ -167,8 +190,8 @@ class AgentMemoryPlugin(star.Star):
         self, query: str, limit: int, session_id: str
     ) -> dict[str, Any]:
         search_limit = min(
-            limit * SEARCH_OVERFETCH_FACTOR,
-            max(limit, SEARCH_OVERFETCH_MAX_RESULTS),
+            limit * self._search_overfetch_factor(),
+            self._search_overfetch_max_results(),
         )
         payload = await self._client().smart_search(query, limit=search_limit)
         payload = filter_results_for_session(payload, session_id)
@@ -288,9 +311,9 @@ class AgentMemoryPlugin(star.Star):
             yield event.plain_result("Usage: /am_forget <observation_id>")
             return
 
-        if not identifier.startswith("obs_"):
+        if self._invalid_observation_ids([identifier]):
             yield event.plain_result(
-                "Use an observation_id like obs_xxx. memory_id deletion is not allowed."
+                self._memory_id_forget_error("Use an observation_id like obs_xxx.")
             )
             return
 
@@ -398,11 +421,11 @@ class AgentMemoryPlugin(star.Star):
             str(item).strip() for item in (observation_ids or []) if str(item).strip()
         ]
         if memory_id:
-            return "memory_id deletion is not allowed. Provide observation_ids to forget."
+            return self._memory_id_forget_error("Provide observation_ids to forget.")
         if not observation_ids:
             return "Provide one or more observation_ids to forget."
-        if any(not item.startswith("obs_") for item in observation_ids):
-            return "Use observation_ids like obs_xxx. memory_id deletion is not allowed."
+        if self._invalid_observation_ids(observation_ids):
+            return self._memory_id_forget_error("Use observation_ids like obs_xxx.")
 
         try:
             await self._client().forget_observations(
